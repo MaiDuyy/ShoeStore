@@ -1,0 +1,142 @@
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 80px;
+    top: 0;
+    left: 50%;
+    padding: 20px 20px;
+    position: fixed;
+    width: 100%;
+    background-color: white;
+    transform: translateX(-50%);
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.navbar .logo{
+    width: 200px;
+}
+.navbar-menu{
+    display: flex;
+    list-style: none;
+    gap: 20px;
+    color: #49557e;
+    font-size: 20px;
+    cursor: pointer;
+    transition: ease 0.3s;
+}
+.navbar-right{
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    list-style: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #49557e;
+    transition: 3s;
+}
+
+.menu-icon {
+    display: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 10px;
+}
+
+.navbar .active{
+    color: #ff6464;
+    text-decoration: underline;
+}
+.navbar-cart{
+    position: relative;
+}
+.navbar-cart .dot{
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ff6464;
+    color: white;
+    border-radius: 50%;
+    padding: 5px;
+    font-size: 12px;
+}
+.navbar-receipt{
+    position: relative;
+}
+.navbar-receipt .dot{
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ff6464;
+    color: white;
+    border-radius: 50%;
+    padding: 5px;
+    font-size: 12px;
+}
+.navbar-right p{
+    background-color: #ff6464;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: ease 0.3s;
+    margin-right: 20px;
+}
+.dropdown-menu {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 65px;
+    right: 20px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 1001;
+}
+
+.dropdown-menu a {
+    padding: 10px;
+    text-decoration: none;
+    color: #49557e;
+    font-size: 18px;
+    transition: background-color 0.3s;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f0f0f0;
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 10px;
+        font-size: 18px;
+        height: 60px;
+    }
+    .navbar .logo {
+        width: 150px;
+    }
+    .navbar-menu {
+        display: none;
+    }
+    .navbar-right {
+        display: none;
+    }
+    .menu-icon {
+        display: block;
+    }
+    .dropdown-menu {
+        display: flex;
+    }
+}
+@media (max-width: 480px) {
+    .navbar {
+        padding: 5px;
+        font-size: 16px;
+        height: 50px;
+    }
+    .navbar .logo {
+        width: 100px;
+    }
+}
