@@ -5,7 +5,8 @@ import {
   ShoppingCart, 
   Footprints, 
   UserCog ,
-  User
+  User,
+  Search 
 } from "lucide-react";
 import React from 'react';
 import { Link } from "react-router-dom";
@@ -102,8 +103,8 @@ const Cart = () => {
 const Header = () => {
   return (
     <header className="bg-white shadow-md">
-      <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-        {/* Nike Logo */}
+      <div className="container mx-auto px-6 py-4 grid grid-cols-3 items-center gap-4">
+        {/* Nike Logo - Cột trái */}
         <div className="flex items-center">
           <a href="/" className="text-2xl font-bold text-gray-800">
             <img
@@ -114,27 +115,27 @@ const Header = () => {
           </a>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="hidden md:flex space-x-8">
-          <a href="/men" className="text-gray-800 hover:text-gray-600 font-medium">
+        {/* Navigation Menu - Cột giữa */}
+        <nav className="hidden md:flex justify-center items-center space-x-6">
+          <a href="/men" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             Men
           </a>
-          <a href="/women" className="text-gray-800 hover:text-gray-600 font-medium">
+          <a href="/women" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             Women
           </a>
-          <a href="/kids" className="text-gray-800 hover:text-gray-600 font-medium">
+          <a href="/kids" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             Kids
           </a>
-          <a href="/new-arrivals" className="text-gray-800 hover:text-gray-600 font-medium">
+          <a href="/new-arrivals" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             New Arrivals
           </a>
-          <a href="/sale" className="text-gray-800 hover:text-gray-600 font-medium">
+          <a href="/sale" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             Sale
           </a>
         </nav>
 
-        <div className="flex items-center gap-4">
-          
+        {/* Right Section - Cột phải */}
+        <div className="flex items-center justify-end gap-4">
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild>
@@ -147,17 +148,24 @@ const Header = () => {
             </SheetContent>
           </Sheet>
 
-          {/* Shopping Cart (Visible on Large Screens) */}
-          <Cart/>
-         
-          {/* User Dropdown (Visible on Large Screens) */}
-          <div className="hidden lg:block">
-            <HeaderRightContent />
+          {/* Search Bar */}
+          <div className="hidden lg:flex items-center px-3 py-1.5 rounded-full border-2 border-gray-200 w-30 hover:bg-gray-100">
+            <Search className="text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search..."
+              className="w-full outline-none bg-transparent text-gray-600 text-sm ml-2"
+            />
           </div>
 
-       </div>
-
-      
+          {/* Cart and User Section */}
+          <div className="flex items-center gap-4">
+            <Cart />
+            <div className="hidden lg:block">
+              <HeaderRightContent />
+            </div>
+          </div>
+        </div>
       </div>
     </header>
   );
