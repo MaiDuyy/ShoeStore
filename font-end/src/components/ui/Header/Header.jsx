@@ -118,19 +118,16 @@ const Header = () => {
         {/* Navigation Menu - Cột giữa */}
         <nav className="hidden md:flex justify-center items-center space-x-6">
           <a href="/men" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
-            Men
+           Home
           </a>
           <a href="/women" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
-            Women
+            Collection
           </a>
           <a href="/kids" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
-            Kids
+            Contact
           </a>
           <a href="/new-arrivals" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
-            New Arrivals
-          </a>
-          <a href="/sale" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
-            Sale
+            About Us
           </a>
         </nav>
 
