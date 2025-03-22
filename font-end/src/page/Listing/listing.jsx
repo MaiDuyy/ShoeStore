@@ -7,11 +7,10 @@ import {
   DropdownMenuRadioGroup,
 } from "@/components/ui/dropdown-menu";
 import { shoppingProductSortOptions } from "@/config";
-import { ArrowUpDownIcon, Loader, SearchIcon } from "lucide-react";
+import { ArrowUpDownIcon, Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Pagination from "@/components/common/pagination";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductFilter from "../../components/ui/filter";
 import ShoppingProductCard from "../../components/ui/ProductCard/product-card";
@@ -21,9 +20,6 @@ import { toast } from "sonner";
 
 function ShoppingListing() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [search, setSearch] = useState(
-    searchParams.get("search") || sessionStorage.getItem("search") || ""
-  );
   const [filters, setFilters] = useState(
     JSON.parse(sessionStorage.getItem("filters")) || {}
   );
@@ -54,10 +50,6 @@ function ShoppingListing() {
           sort: sort
         });
 
-        if (search) {
-          queryParams.append('search', search);
-        }
-
         // Add filters to query params
         if (Object.keys(filters).length > 0) {
           Object.entries(filters).forEach(([key, values]) => {
@@ -70,8 +62,25 @@ function ShoppingListing() {
         const response = await axios.get(`${API_URLS.GET_PRODUCTS}?${queryParams}`);
         
         if (response.data) {
-          setProducts(response.data.products || response.data);
-          setTotalPages(Math.ceil((response.data.total || response.data.length) / limitProductsPerPage));
+          // Filter products by price range if price filter is applied
+          let filteredProducts = response.data.products || response.data;
+          
+          if (filters.price && filters.price.length > 0) {
+            filteredProducts = filteredProducts.filter(product => {
+              const price = product.sale_price || product.original_price;
+              return filters.price.some(range => {
+                const [min, max] = range.split('-').map(Number);
+                if (max) {
+                  return price >= min && price <= max;
+                } else {
+                  return price >= min;
+                }
+              });
+            });
+          }
+          
+          setProducts(filteredProducts);
+          setTotalPages(Math.ceil(filteredProducts.length / limitProductsPerPage));
         }
       } catch (err) {
         setError(err.message);
@@ -82,14 +91,13 @@ function ShoppingListing() {
     };
 
     fetchProducts();
-  }, [currentPage, search, sort, filters]);
+  }, [currentPage, sort, filters]);
 
   // Update URL and session storage when state changes
   useEffect(() => {
     let params = new URLSearchParams();
     if (sort) params.set("sort", sort);
     if (currentPage) params.set("page", currentPage);
-    if (search.length > 0) params.set("search", search);
 
     setSearchParams(params.toString());
 
@@ -97,13 +105,12 @@ function ShoppingListing() {
     sessionStorage.setItem("filters", JSON.stringify(filters));
     sessionStorage.setItem("sort", sort);
     sessionStorage.setItem("page", currentPage.toString());
-    sessionStorage.setItem("search", search);
-  }, [filters, sort, currentPage, search, setSearchParams]);
+  }, [filters, sort, currentPage, setSearchParams]);
 
   // Reset to page 1 when filters or sort changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters, sort, search]);
+  }, [filters, sort]);
 
   const handleSort = (value) => {
     setSort(value);
@@ -137,138 +144,113 @@ function ShoppingListing() {
     });
   };
 
-  const handleSearch = () => {
-    setCurrentPage(1);
-  };
-
   const handleClearFilters = () => {
     setFilters({});
-    setSearch("");
     setSort(shoppingProductSortOptions[0].id);
     setCurrentPage(1);
   };
 
   return (
-    <div className="grid relative grid-cols-1 md:grid-cols-[250px_1fr] gap-6 p-4 md:p-6 mt-12">
-      <aside className="space-y-4">
-        <ProductFilter filters={filters} handleFilter={handleFilter} />
-        {(Object.keys(filters).length > 0 || search) && (
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={handleClearFilters}
-          >
-            Clear Filters
-          </Button>
-        )}
-      </aside>
-      
-      <div className="w-full rounded-lg shadow-sm bg-background">
-        <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b gap-4">
-          <h2 className="text-lg font-bold">All Products</h2>
-          
-          {/* Search */}
-          <div className="w-full sm:w-[400px] lg:w-[500px]">
-            <div className="flex items-center space-x-2">
-              <Input
-                type="text"
-                placeholder="Search products..."
-                onChange={(e) => setSearch(e.target.value)}
-                value={search}
-                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-              />
-              <Button
-                type="submit"
-                className="flex items-center gap-2"
-                onClick={handleSearch}
-                disabled={loading}
-              >
-                {loading ? <Loader className="animate-spin" /> : <SearchIcon />}
-                Search
-              </Button>
-            </div>
+    <>
+      <div className="grid relative grid-cols-1 md:grid-cols-[250px_1fr] gap-6 p-4 md:p-6 mt-12">
+        <aside className="space-y-4">
+          <ProductFilter filters={filters} handleFilter={handleFilter} />
+          {Object.keys(filters).length > 0 && (
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={handleClearFilters}
+            >
+              Clear Filters
+            </Button>
+          )}
+        </aside>
+        
+        <div className="w-full rounded-lg shadow-sm bg-background">
+          <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b gap-4">
+            <h2 className="text-lg font-bold">All Products</h2>
+
+            {/* Sort */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 min-w-[150px]"
+                >
+                  <ArrowUpDownIcon className="w-4 h-4" />
+                  <span>
+                    {shoppingProductSortOptions.find(item => item.id === sort)?.label || 'Sort'}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuRadioGroup
+                  value={sort}
+                  onValueChange={handleSort}
+                >
+                  {shoppingProductSortOptions.map((sortItem) => (
+                    <DropdownMenuRadioItem
+                      value={sortItem.id}
+                      key={sortItem.id}
+                    >
+                      {sortItem.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          {/* Sort */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 min-w-[150px]"
-              >
-                <ArrowUpDownIcon className="w-4 h-4" />
-                <span>
-                  {shoppingProductSortOptions.find(item => item.id === sort)?.label || 'Sort'}
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuRadioGroup
-                value={sort}
-                onValueChange={handleSort}
-              >
-                {shoppingProductSortOptions.map((sortItem) => (
-                  <DropdownMenuRadioItem
-                    value={sortItem.id}
-                    key={sortItem.id}
-                  >
-                    {sortItem.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+          <div className="pb-6">
+            {error ? (
+              <div className="p-4 text-center text-red-500">
+                {error}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {loading ? (
+                    Array.from({ length: limitProductsPerPage }).map((_, index) => (
+                      <div key={index} className="w-full h-full max-w-sm mx-auto">
+                        <Skeleton className="w-full aspect-square" />
+                        <Skeleton className="w-full h-4 mt-2" />
+                        <Skeleton className="w-1/2 h-4 mt-2" />
+                        <Skeleton className="w-1/3 h-6 mt-2" />
+                      </div>
+                    ))
+                  ) : products?.length > 0 ? (
+                    products.map((product) => (
+                      <div
+                        key={product._id}
+                        className="rounded-md transition-shadow duration-200 hover:shadow-lg"
+                      >
+                        <ShoppingProductCard product={product} />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-8 text-muted-foreground">
+                      No products found
+                    </div>
+                  )}
+                </div>
 
-        <div className="pb-6">
-          {error ? (
-            <div className="p-4 text-center text-red-500">
-              {error}
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {loading ? (
-                  Array.from({ length: limitProductsPerPage }).map((_, index) => (
-                    <div key={index} className="w-full h-full max-w-sm mx-auto">
-                      <Skeleton className="w-full aspect-square" />
-                      <Skeleton className="w-full h-4 mt-2" />
-                      <Skeleton className="w-1/2 h-4 mt-2" />
-                      <Skeleton className="w-1/3 h-6 mt-2" />
-                    </div>
-                  ))
-                ) : products?.length > 0 ? (
-                  products.map((product) => (
-                    <div
-                      key={product._id}
-                      className="rounded-md transition-shadow duration-200 hover:shadow-lg"
-                    >
-                      <ShoppingProductCard product={product} />
-                    </div>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-8 text-muted-foreground">
-                    No products found
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="px-4">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                    />
                   </div>
                 )}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="px-4">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                  />
-                </div>
-              )}
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

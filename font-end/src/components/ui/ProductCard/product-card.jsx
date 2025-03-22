@@ -1,47 +1,141 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from "../card";
 import { Badge } from "../badge";
-import axios from 'axios';
-import API_URLS from '../../../config/config';
 import { Button } from "../button";
 import { ShoppingCartIcon } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-// import { addProductToCartThunk } from '@/store/shop/CartSlice';
-// import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/contexts/CartContext";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function ShoppingProductCard({ product, handleGetProductDetails }) {
-    // const dispatch = useDispatch();
     const navigate = useNavigate();
-     const [currentImage, setCurrentImage] = useState('');
-    // const { toast } = useToast();
-    // const { user } = useSelector((state) => state.auth);
+    const { addToCart, cartItems } = useCart();
     const [isLoading, setIsLoading] = useState(false);
+    const [showAlert, setShowAlert] = useState(false);
+    const [alertConfig, setAlertConfig] = useState({
+        title: "",
+        description: "",
+        variant: "default"
+    });
+
+    // Effect để tự động đóng alert sau 1 giây
+    useEffect(() => {
+        let timeoutId;
+        if (showAlert) {
+            timeoutId = setTimeout(() => {
+                setShowAlert(false);
+            }, 400);
+        }
+        return () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+        };
+    }, [showAlert]);
+
+    // Tìm size và màu đầu tiên có sẵn trong kho
+    const firstAvailableVariant = useMemo(() => {
+        if (!product.quantities || !Array.isArray(product.quantities)) {
+            return null;
+        }
+        // Tìm variant đầu tiên có số lượng > 0
+        const availableVariant = product.quantities.find(q => q.quantity > 0);
+        if (!availableVariant) {
+            return null;
+        }
+        return {
+            colorId: availableVariant.color_id,
+            colorName: availableVariant.color_name,
+            sizeId: availableVariant.size_id,
+            sizeName: availableVariant.size_name,
+            quantity: availableVariant.quantity
+        };
+    }, [product.quantities]);
+
+    // Calculate total available stock across all color/size combinations
+    const totalAvailableStock = useMemo(() => {
+        if (!product.quantities || !Array.isArray(product.quantities)) {
+            return 0;
+        }
+        return product.quantities.reduce((sum, item) => sum + item.quantity, 0);
+    }, [product.quantities]);
+
+    // Kiểm tra số lượng hiện có trong giỏ hàng cho variant cụ thể
+    const currentCartQuantity = useMemo(() => {
+        const cartItem = cartItems.find(item => 
+            item.id === product.shoes_id && 
+            item.selectedColor?.id === firstAvailableVariant?.colorId &&
+            item.selectedSize?.id === firstAvailableVariant?.sizeId
+        );
+        return cartItem?.quantities || 0;
+    }, [cartItems, product.shoes_id, firstAvailableVariant]);
+
+    const showAlertDialog = (title, description, variant = "default") => {
+        setAlertConfig({ title, description, variant });
+        setShowAlert(true);
+    };
 
     const handleAddToCart = async (e) => {
         e.stopPropagation();
         setIsLoading(true);
 
         try {
-            if (!product.is_available || product.total_stock <= 0) {
-                toast({ title: "This product is out of stock" });
+            if (!firstAvailableVariant) {
+                showAlertDialog(
+                    "Cannot add to cart",
+                    "No available variants for this product",
+                    "error"
+                );
                 return;
             }
 
-            await dispatch(addProductToCartThunk({
-                userId: user.id,
-                productId: product.shoes_id,
-                quantity: 1,
-                totalStock: product.total_stock,
-            }));
+            // Kiểm tra nếu thêm vào sẽ vượt quá số lượng trong kho của variant cụ thể
+            if (currentCartQuantity >= firstAvailableVariant.quantity) {
+                showAlertDialog(
+                    "Cannot add more",
+                    "You've reached the maximum available quantity for this variant",
+                    "error"
+                );
+                return;
+            }
 
-            toast({ title: "Product added to cart" });
-        } catch (error) {
-            toast({ 
-                title: "Error adding to cart",
-                description: error.message,
-                variant: "destructive"
+            addToCart({
+                id: product.shoes_id,
+                shoes_name: product.shoes_name,
+                price: product.sale_price || product.original_price,
+                images: product.images,
+                quantity: 1,
+                selectedColor: {
+                    id: firstAvailableVariant.colorId,
+                    name: firstAvailableVariant.colorName
+                },
+                selectedSize: {
+                    id: firstAvailableVariant.sizeId,
+                    name: firstAvailableVariant.sizeName
+                },
+                availableQuantity: firstAvailableVariant.quantity
             });
+
+            showAlertDialog(
+                "Success",
+                `Added size ${firstAvailableVariant.sizeName}, color ${firstAvailableVariant.colorName} to cart!`,
+                "success"
+            );
+        } catch (error) {
+            showAlertDialog(
+                "Error",
+                "Failed to add product to cart",
+                "error"
+            );
         } finally {
             setIsLoading(false);
         }
@@ -74,62 +168,106 @@ function ShoppingProductCard({ product, handleGetProductDetails }) {
         );
     };
 
+    // Kiểm tra nếu đã thêm đủ số lượng trong kho cho variant cụ thể
+    const isMaxQuantityReached = firstAvailableVariant 
+        ? currentCartQuantity >= firstAvailableVariant.quantity 
+        : true;
+
     return (
-        <Card 
-            onClick={handleProductClick}
-            className="w-full max-w-sm p-0 hover:shadow-lg transition-shadow cursor-pointer"
-        >
-            <CardHeader className="relative p-0">
-                <img
-                    src={product.images}
-                    alt={product.shoes_name}
-                    className="object-cover w-full rounded-t-lg aspect-square"
-                    loading="lazy"
-                />
-                <div className="absolute top-2 right-2">
-                    <Button
-                        disabled={!product.is_available || product.total_stock <= 0 || isLoading}
-                        onClick={handleAddToCart}
-                        variant="secondary"
-                        size="sm"
-                    >
-                        <ShoppingCartIcon className="w-5 h-5" />
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent className="p-4">
-                <h2 className="mb-2 text-lg font-semibold truncate" title={product.shoes_name}>
-                    {product.shoes_name}
-                </h2>
-                <div className="flex gap-2 mb-2 flex-wrap">
-                    <Badge variant="outline" className="capitalize">
-                        {product.category_name}
-                    </Badge>
-                    <Badge variant="outline" className="capitalize">
-                        {product.brand_name}
-                    </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                    {getPriceDisplay()}
-                    <Badge 
-                        variant={
-                            product.is_available && product.total_stock > 0 
-                                ? "default" 
-                                : "destructive"
-                        }
-                    >
-                        {product.is_available && product.total_stock > 0
-                            ? `${product.total_stock} in stock`
-                            : "Out of stock"}
-                    </Badge>
-                </div>
-            </CardContent>
-            <CardFooter className="p-4 pt-0">
-                <p className="text-sm text-gray-600 line-clamp-2">
-                    {product.description}
-                </p>
-            </CardFooter>
-        </Card>
+        <>
+            <Card 
+                onClick={handleProductClick}
+                className="w-full max-w-sm p-0 hover:shadow-lg transition-shadow cursor-pointer"
+            >
+                <CardHeader className="relative p-0">
+                    <img
+                        src={product.images[0] || product.images}
+                        alt={product.shoes_name}
+                        className="object-cover w-full rounded-t-lg aspect-square"
+                        loading="lazy"
+                    />
+                    <div className="absolute top-2 right-2">
+                        <Button
+                            disabled={!firstAvailableVariant || isLoading || isMaxQuantityReached}
+                            onClick={handleAddToCart}
+                            variant="secondary"
+                            size="sm"
+                            className="hover:scale-110 transition-transform active:scale-95"
+                            title={
+                                !firstAvailableVariant 
+                                    ? "No available variants" 
+                                    : isMaxQuantityReached 
+                                        ? "Maximum quantity reached" 
+                                        : `Add size ${firstAvailableVariant.sizeName}, color ${firstAvailableVariant.colorName}`
+                            }
+                        >
+                            <ShoppingCartIcon className="w-5 h-5" />
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                    <h2 className="mb-2 text-lg font-semibold truncate" title={product.shoes_name}>
+                        {product.shoes_name}
+                    </h2>
+                    <div className="flex gap-2 mb-2 flex-wrap">
+                        <Badge variant="outline" className="capitalize">
+                            {product.category_name}
+                        </Badge>
+                        <Badge variant="outline" className="capitalize">
+                            {product.brand_name}
+                        </Badge>
+                        {firstAvailableVariant && (
+                            <>
+                                <Badge variant="outline">
+                                    Size: {firstAvailableVariant.sizeName}
+                                </Badge>
+                                <Badge variant="outline">
+                                    Color: {firstAvailableVariant.colorName}
+                                </Badge>
+                            </>
+                        )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                        {getPriceDisplay()}
+                        <Badge 
+                            variant={
+                                firstAvailableVariant
+                                    ? isMaxQuantityReached ? "destructive" : "default"
+                                    : "destructive"
+                            }
+                        >
+                            {firstAvailableVariant
+                                ? isMaxQuantityReached 
+                                    ? "Max quantity reached"
+                                    : `${firstAvailableVariant.quantity - currentCartQuantity} available`
+                                : "Out of stock"}
+                        </Badge>
+                    </div>
+                </CardContent>
+                <CardFooter className="p-4 pt-0">
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                        {product.description}
+                    </p>
+                </CardFooter>
+            </Card>
+
+            <AlertDialog open={showAlert}>
+                <AlertDialogContent className="transition-opacity duration-1000">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className={
+                            alertConfig.variant === "error" ? "text-red-600" : 
+                            alertConfig.variant === "success" ? "text-green-600" : 
+                            "text-gray-900"
+                        }>
+                            {alertConfig.title}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {alertConfig.description}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }
 

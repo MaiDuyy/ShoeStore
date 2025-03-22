@@ -169,6 +169,18 @@ import {
                           <h4 className="text-sm font-semibold line-clamp-2">
                             {product.productId.title}
                           </h4>
+                          <div className="flex gap-2">
+                            {product.selectedSize && (
+                              <Badge variant="outline" className="text-xs">
+                                Size: {product.selectedSize.name}
+                              </Badge>
+                            )}
+                            {product.selectedColor && (
+                              <Badge variant="outline" className="text-xs">
+                                Color: {product.selectedColor.name}
+                              </Badge>
+                            )}
+                          </div>
                           <p className="flex items-baseline text-sm text-gray-500 gap-x-1.5">
                             <span className="flex items-center justify-center w-auto h-5 px-2 text-sm font-medium rounded-full gap-x-1 text-background bg-primary/80">
                               {product.quantity}
@@ -231,6 +243,7 @@ import {
                                     quantity: 1,
                                   })
                                 }
+                                disabled={product.quantity >= product.availableQuantity}
                               >
                                 <PlusIcon className="w-2 h-2" />
                               </Button>
@@ -252,7 +265,9 @@ import {
                                     Are you sure you want to remove this product?
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    (Product) : {product.productId.title}
+                                    {product.productId.title}
+                                    {product.selectedSize && ` - Size: ${product.selectedSize.name}`}
+                                    {product.selectedColor && ` - Color: ${product.selectedColor.name}`}
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

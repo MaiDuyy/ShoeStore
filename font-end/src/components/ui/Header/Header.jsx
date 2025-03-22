@@ -6,13 +6,17 @@ import {
   Footprints, 
   UserCog ,
   User,
-  Search 
+  Search,
+  Plus,
+  Minus,
+  Trash2
 } from "lucide-react";
 import React from 'react';
 import { Link } from "react-router-dom";
 import { Button } from "../button";
 import { Input } from "../input";
 import { Label } from "../label";
+import { useCart } from "@/contexts/CartContext";
 
 import {
   DropdownMenu,
@@ -34,6 +38,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import SearchBar from '@/components/ui/SearchBar/SearchBar';
 
 const HeaderRightContent = () => {
   return (
@@ -64,45 +69,105 @@ const HeaderRightContent = () => {
   );
 };
 const Cart = () => {
+  const { cartItems, addToCart, removeFromCart, updateQuantity, totalPrice } = useCart();
+  
   return (
-  <Sheet>
+    <Sheet>
       <SheetTrigger asChild>
-     <ShoppingCart className="w-6 h-6 hidden text-gray-800 hover:text-gray-600 lg:block"/>
+        <div className="relative">
+          <ShoppingCart className="w-6 h-6 hidden text-gray-800 hover:text-gray-600 lg:block"/>
+          {cartItems.length > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              {cartItems.length}
+            </span>
+          )}
+        </div>
       </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Edit profile</SheetTitle>
+      <SheetContent className="flex w-full flex-col sm:max-w-lg">
+        <SheetHeader className="px-1">
+          <SheetTitle>Shopping Cart</SheetTitle>
           <SheetDescription>
-            Make changes to your profile here. Click save when you're done.
+            {cartItems.length === 0 ? 'Your cart is empty' : `You have ${cartItems.length} items in your cart`}
           </SheetDescription>
         </SheetHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" value="Pedro Duarte" className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="username" className="text-right">
-              Username
-            </Label>
-            <Input id="username" value="@peduarte" className="col-span-3" />
-          </div>
+        
+        <div className="flex flex-1 flex-col gap-5 overflow-hidden">
+          {cartItems.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center">
+              <ShoppingBag className="mb-4 h-16 w-16 text-gray-400" />
+              <p className="text-gray-500">No items in cart</p>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
+              <div className="h-full space-y-4 overflow-y-auto p-1">
+                {cartItems.map((item) => (
+                  <div 
+                    key={item.id} 
+                    className="flex items-start gap-4 rounded-lg border bg-white p-4 shadow-sm"
+                  >
+                    <img 
+                      src={item.images} 
+                      alt={item.shoes_name}
+                      className="h-20 w-20 rounded-md object-cover"
+                    />
+                    <div className="flex flex-1 flex-col gap-1">
+                      <h3 className="font-medium line-clamp-2">{item.shoes_name}</h3>
+                      <p className="text-sm text-gray-500">${item.price}</p>
+                      
+                      <div className="flex items-center gap-2 mt-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => removeFromCart(item.id)}
+                          className="ml-auto"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        <SheetFooter>
-          <SheetClose asChild>
-            <Button type="submit">Save changes</Button>
-          </SheetClose>
-        </SheetFooter>
+
+        <div className="border-t pt-4 mt-auto">
+          <div className="flex justify-between text-base font-medium px-1">
+            <p>Subtotal</p>
+            <p>${totalPrice.toFixed(2)}</p>
+          </div>
+          <SheetFooter className="mt-6">
+            <SheetClose asChild>
+              <Button className="w-full" disabled={cartItems.length === 0}>
+                Checkout (${totalPrice.toFixed(2)})
+              </Button>
+            </SheetClose>
+          </SheetFooter>
+        </div>
       </SheetContent>
     </Sheet>
   );
-
 };
 const Header = () => {
   return (
-    <header className="bg-white shadow-md">
+    <header className="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
       <div className="container mx-auto px-6 py-4 grid grid-cols-3 items-center gap-4">
         {/* Nike Logo - Cột trái */}
         <div className="flex items-center">
@@ -117,16 +182,16 @@ const Header = () => {
 
         {/* Navigation Menu - Cột giữa */}
         <nav className="hidden md:flex justify-center items-center space-x-6">
-          <a href="/men" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+          <a href="/" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
            Home
           </a>
-          <a href="/women" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+          <a href="/listing" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             Collection
           </a>
-          <a href="/kids" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+          <a href="/contact" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             Contact
           </a>
-          <a href="/new-arrivals" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+          <a href="/about" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             About Us
           </a>
         </nav>
@@ -146,14 +211,14 @@ const Header = () => {
           </Sheet>
 
           {/* Search Bar */}
-          <div className="hidden lg:flex items-center px-3 py-1.5 rounded-full border-2 border-gray-200 w-30 hover:bg-gray-100">
-            <Search className="text-gray-400 w-4 h-4" />
-            <input
+          {/* <div className="hidden lg:flex items-center px-3 py-1.5 rounded-full border-2 border-gray-200 w-30 hover:bg-gray-100"> */}
+            <SearchBar className="flex justify-center" />
+            {/* <input
               type="text"
               placeholder="Search..."
               className="w-full outline-none bg-transparent text-gray-600 text-sm ml-2"
-            />
-          </div>
+            /> */}
+          {/* </div> */}
 
           {/* Cart and User Section */}
           <div className="flex items-center gap-4">

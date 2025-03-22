@@ -45,7 +45,7 @@ const Home = () => {
 
   return (
     <>
-      <ShoppingHeader />
+      {/* <ShoppingHeader /> */}
       <Fragment>
         <section id="hero" className="w-full mt-12">
           {/* <div className="relative z-10 w-full h-[70vh] bg-green"> */}
@@ -85,12 +85,12 @@ const Home = () => {
 
           <HeroSection/>
           <FeaturedProducts/>
-          <HighlightedCollections/>
+          {/* <HighlightedCollections/>s */}
           
-          <ContactUs/>
+          <ContactUs id="contact-us"/>
         </section>
 
-        <Footer/>
+        {/* <Footer/> */}
       </Fragment>
     </>
   );

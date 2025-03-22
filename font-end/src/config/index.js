@@ -118,22 +118,24 @@ export const registerFormControls = [
   
   export const shoppingProductFilterOptions = {
     category: [
-      { id: "men", label: "Men" },
-      { id: "women", label: "Women" },
-      { id: "kids", label: "Kids" },
-      { id: "footwear", label: "Footwear" },
-      { id: "accessories", label: "Accessories" },
+      { id: "LG1", label: "RUNNING" },
+      { id: "LG2", label: "FOOTBALL" },
+      { id: "LG3", label: "CASUAL" },
+      { id: "LG4", label: "FORMAL" },
     ],
     brand: [
-      { id: "nike", label: "Nike" },
-      { id: "adidas", label: "Adidas" },
-      { id: "puma", label: "Puma" },
-      { id: "reebok", label: "Reebok" },
-      { id: "under-armour", label: "Under Armour" },
-      { id: "zara", label: "Zara" },
-      { id: "h&m", label: "H&M" },
-      { id: "forever-21", label: "Forever 21" },
+      { id: "BR1", label: "NIKE" },
+      { id: "BR2", label: "ADIDAS" },
+      { id: "BR3", label: "HUSHPUPPIES" },
+      { id: "BR4", label: "Reebok" },
+      { id: "BR5", label: "Vans" }
     ],
+    price: [
+      { id: "0-50", label: "Under $50" },
+      { id: "50-100", label: "50$ - $100" },
+      { id: "100-200", label: "$100 - $200" },
+      { id: "200+", label: "Over $200" }
+    ]
   };
   
   export const shoppingProductSortOptions = [
