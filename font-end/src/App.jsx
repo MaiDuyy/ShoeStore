@@ -14,7 +14,9 @@ import About from './page/AboutUs/AboutUs'
 import ContactUs from './components/ui/Contact-us/contact-us'
 import { ToastContainer } from './components/ui/toast'
 import { useToast } from './hooks/use-toast'
+import ChatBox from '@/components/ui/ChatBox/ChatBox';
 
+import { AuthProvider } from "@/contexts/AuthContext";
 function ToastProvider({ children }) {
   const { toasts } = useToast();
   
@@ -24,7 +26,7 @@ function ToastProvider({ children }) {
       <ToastContainer 
         toasts={toasts}
         onClose={(id) => {
-          // Toast will auto-remove after timeout
+         
         }}
       />
     </>
@@ -34,9 +36,11 @@ function ToastProvider({ children }) {
 function App() {
   return (
     <BrowserRouter>
+    <AuthProvider>
       <CartProvider>
         <ToastProvider>
           <Header />
+          <ChatBox />
           <div className="pt-[72px]">
             <Routes>
               <Route path="/" element={<Home/>}/>
@@ -45,14 +49,16 @@ function App() {
               <Route path="/contact" element={<ContactUs/>}/>
               <Route path='/auth/login' element = {<AuthLogin/>}/>
               <Route path='/auth/register' element = {<AuthRegister/>}/>
-              <Route path="/shoes/:maGiay" element={<ProductDetail />} /> 
+              <Route path="/product/:id" element={<ProductDetail />} /> 
               <Route path="/card" element={<ShoppingProductCard />} /> 
               <Route path="/product" element={<ShowAllProductsPage />} /> 
+
             </Routes>
           </div>
           <Footer/>
         </ToastProvider>
       </CartProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

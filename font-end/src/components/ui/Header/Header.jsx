@@ -1,22 +1,21 @@
+// Header.jsx
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from "react-router-dom";
 import { 
   LogOut, 
   Menu, 
   ShoppingBag, 
   ShoppingCart, 
-  Footprints, 
-  UserCog ,
+  UserCog,
   User,
-  Search,
   Plus,
   Minus,
   Trash2
 } from "lucide-react";
-import React from 'react';
-import { Link } from "react-router-dom";
+
 import { Button } from "../button";
-import { Input } from "../input";
-import { Label } from "../label";
 import { useCart } from "@/contexts/CartContext";
+import SearchBar from '@/components/ui/SearchBar/SearchBar';
 
 import {
   DropdownMenu,
@@ -38,29 +37,78 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import SearchBar from '@/components/ui/SearchBar/SearchBar';
 
-const HeaderRightContent = () => {
+import { useAuth } from "@/contexts/AuthContext";
+
+/** Utils */
+const getInitials = (nameOrEmail = '') => {
+  const s = String(nameOrEmail).trim();
+  if (!s) return 'U';
+  const parts = s.includes(' ') ? s.split(' ') : [s];
+  const first = parts[0]?.[0] || 'U';
+  const second = parts[1]?.[0] || '';
+  return (first + second).toUpperCase();
+};
+
+const currency = (n) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(n || 0));
+
+/** Quy ước vai trò có trang quản trị (theo Corbado demo: ROLE_ADMIN) */
+const isAdminLike = (roles = []) => {
+  const set = new Set((roles || []).map(r => String(r).toUpperCase()));
+  return set.has('ROLE_ADMIN') || set.has('ROLE_SUPERADMIN') || set.has('ADMIN') || set.has('SUPERADMIN');
+};
+
+/** ==================== HeaderRightContent ==================== */
+const HeaderRightContent = ({ user, onLogout }) => {
+  const navigate = useNavigate();
+
+  if (!user) {
+    // Chưa đăng nhập: Hiện Login / Register
+    return (
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" onClick={() => navigate('/auth/login')}>Login</Button>
+        <Button onClick={() => navigate('/auth/register')}>Register</Button>
+      </div>
+    );
+  }
+
+  const label = user?.username || user?.name || user?.email || 'User';
+  const roles = Array.isArray(user?.roles) ? user.roles : (user?.roles ? [user.roles] : []);
+  const rolesText = roles.join(', ');
+
   return (
     <div className="flex items-center gap-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Avatar className="bg-black">
+          <Avatar className="bg-black cursor-pointer">
             <AvatarFallback className="font-extrabold text-white bg-black">
-              U
+              {getInitials(label)}
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
+
         <DropdownMenuContent side="right" className="w-56">
-          <DropdownMenuLabel>
-            Logged In as <span className="font-medium">User</span>
+          <DropdownMenuLabel className="space-y-1">
+            <div className="text-sm text-gray-500">Logged in as</div>
+            <div className="font-medium">{label}</div>
+            {rolesText && <div className="text-xs text-gray-500">Roles: {rolesText}</div>}
           </DropdownMenuLabel>
+
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+
+          <DropdownMenuItem onClick={() => navigate('/account')}>
             <UserCog className="w-4 h-4 mr-2" /> Account
           </DropdownMenuItem>
+
+          {isAdminLike(roles) && (
+            <DropdownMenuItem onClick={() => navigate('/admin')}>
+              <User className="w-4 h-4 mr-2" /> Admin Dashboard
+            </DropdownMenuItem>
+          )}
+
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={onLogout}>
             <LogOut className="w-4 h-4 mr-2" /> Logout
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -68,9 +116,11 @@ const HeaderRightContent = () => {
     </div>
   );
 };
+
+/** ==================== Cart ==================== */
 const Cart = () => {
-  const { cartItems, addToCart, removeFromCart, updateQuantity, totalPrice } = useCart();
-  
+  const { cartItems, removeFromCart, updateQuantity, totalPrice } = useCart();
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -83,6 +133,7 @@ const Cart = () => {
           )}
         </div>
       </SheetTrigger>
+
       <SheetContent className="flex w-full flex-col sm:max-w-lg">
         <SheetHeader className="px-1">
           <SheetTitle>Shopping Cart</SheetTitle>
@@ -106,13 +157,13 @@ const Cart = () => {
                     className="flex items-start gap-4 rounded-lg border bg-white p-4 shadow-sm"
                   >
                     <img 
-                      src={item.images} 
-                      alt={item.shoes_name}
+                      src={item.imageURL} 
+                      alt={item.name}
                       className="h-20 w-20 rounded-md object-cover"
                     />
                     <div className="flex flex-1 flex-col gap-1">
-                      <h3 className="font-medium line-clamp-2">{item.shoes_name}</h3>
-                      <p className="text-sm text-gray-500">${item.price}</p>
+                      <h3 className="font-medium line-clamp-2">{item.name}</h3>
+                      <p className="text-sm text-gray-500">{currency(item.price)}</p>
                       
                       <div className="flex items-center gap-2 mt-2">
                         <Button
@@ -151,12 +202,12 @@ const Cart = () => {
         <div className="border-t pt-4 mt-auto">
           <div className="flex justify-between text-base font-medium px-1">
             <p>Subtotal</p>
-            <p>${totalPrice.toFixed(2)}</p>
+            <p>{currency(totalPrice)}</p>
           </div>
           <SheetFooter className="mt-6">
             <SheetClose asChild>
               <Button className="w-full" disabled={cartItems.length === 0}>
-                Checkout (${totalPrice.toFixed(2)})
+                Checkout ({currency(totalPrice)})
               </Button>
             </SheetClose>
           </SheetFooter>
@@ -165,40 +216,62 @@ const Cart = () => {
     </Sheet>
   );
 };
+
+/** ==================== Header ==================== */
 const Header = () => {
+  const navigate = useNavigate();
+  const { user, logout, refreshMe } = useAuth();
+
+  // F5/first load: xác thực token qua /api/test/user (theo bài Corbado)
+  useEffect(() => {
+    if (!user && typeof refreshMe === 'function') {
+      refreshMe().catch(() => {/* ignore */});
+    }
+  }, [user, refreshMe]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
   return (
     <header className="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
       <div className="container mx-auto px-6 py-4 grid grid-cols-3 items-center gap-4">
-        {/* Nike Logo - Cột trái */}
+        {/* Logo */}
         <div className="flex items-center">
-          <a href="/" className="text-2xl font-bold text-gray-800">
+          <Link to="/" className="text-2xl font-bold text-gray-800">
             <img
               src="https://www.logo.wine/a/logo/Nike%2C_Inc./Nike%2C_Inc.-Nike-Logo.wine.svg"
-              alt="Nike Logo"
+              alt="Logo"
               className="h-10"
             />
-          </a>
+          </Link>
         </div>
 
-        {/* Navigation Menu - Cột giữa */}
+        {/* Navigation */}
         <nav className="hidden md:flex justify-center items-center space-x-6">
-          <a href="/" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
-           Home
-          </a>
-          <a href="/listing" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+          <Link to={"/"} className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+            Home
+          </Link>
+          <Link to={"/listing"} className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             Collection
-          </a>
-          <a href="/contact" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+          </Link>
+          <Link to={"/contact"} className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             Contact
-          </a>
-          <a href="/about" className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+          </Link>
+          <Link to={"/about"} className="text-gray-800 hover:text-gray-600 font-medium text-sm">
             About Us
-          </a>
+          </Link>
+          {user && isAdminLike(user.roles) && (
+            <Link to={"/admin"} className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+              Admin
+            </Link>
+          )}
         </nav>
 
-        {/* Right Section - Cột phải */}
+        {/* Right Section */}
         <div className="flex items-center justify-end gap-4">
-          {/* Mobile Menu */}
+          {/* Mobile Menu (Sheet) */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="lg:hidden">
@@ -206,25 +279,45 @@ const Header = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-full max-w-xs">
-              <HeaderRightContent />
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription>Quick navigation</SheetDescription>
+              </SheetHeader>
+
+              <div className="mt-4 flex flex-col gap-3">
+                <Link to={"/"} className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+                  Home
+                </Link>
+                <Link to={"/listing"} className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+                  Collection
+                </Link>
+                <Link to={"/contact"} className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+                  Contact
+                </Link>
+                <Link to={"/about"} className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+                  About Us
+                </Link>
+                {user && isAdminLike(user.roles) && (
+                  <Link to={"/admin"} className="text-gray-800 hover:text-gray-600 font-medium text-sm">
+                    Admin
+                  </Link>
+                )}
+              </div>
+
+              <div className="mt-6">
+                <HeaderRightContent user={user} onLogout={handleLogout} />
+              </div>
             </SheetContent>
           </Sheet>
 
-          {/* Search Bar */}
-          {/* <div className="hidden lg:flex items-center px-3 py-1.5 rounded-full border-2 border-gray-200 w-30 hover:bg-gray-100"> */}
-            <SearchBar className="flex justify-center" />
-            {/* <input
-              type="text"
-              placeholder="Search..."
-              className="w-full outline-none bg-transparent text-gray-600 text-sm ml-2"
-            /> */}
-          {/* </div> */}
+          {/* Search */}
+          <SearchBar className="hidden md:flex justify-center" />
 
-          {/* Cart and User Section */}
+          {/* Cart + User */}
           <div className="flex items-center gap-4">
             <Cart />
             <div className="hidden lg:block">
-              <HeaderRightContent />
+              <HeaderRightContent user={user} onLogout={handleLogout} />
             </div>
           </div>
         </div>

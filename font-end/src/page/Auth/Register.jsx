@@ -1,38 +1,45 @@
 import CommonForm from "@/components/common/form";
 import { registerFormControls } from "@/config";
-// import { registerUserThunk } from "@/store/auth-slice";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-// import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "../../contexts/AuthContext/index";
+// import {authApi} from "../../service/api";
 
 const initialState = {
-  userName: "",
+  name: "",
   email: "",
   password: "",
 };
 
 const AuthRegister = () => {
   const [formData, setFormData] = useState(initialState);
-//   const dispacth = useDispatch();
-//   const navigate = useNavigate();
-//   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const {register} = useAuth();
+  async function onSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-  function onSubmit(e) {
-    // e.preventDefault();
-    // dispacth(registerUserThunk(formData)).then((data) => {
-    //   if (data?.payload?.success) {
-    //     toast({
-    //       title: data?.payload?.message,
-    //     });
-    //     navigate("/auth/login");
-    //   } else {
-    //     toast({
-    //       title: data?.payload?.message,
-    //       variant: "destructive",
-    //     });
-    //   }
-    // });
+    try {
+      const user = await register( formData.name, formData.email, formData.password);
+      console.log('Registration successful:', user);
+      
+      // Tự động đăng nhập sau khi đăng ký hoặc chuyển hướng đến trang đăng nhập
+      navigate("/auth/login");
+      
+      // Hoặc có thể đăng nhập luôn:
+      // const loginUser = await authApi.login(formData.email, formData.password);
+      // console.log('Auto-login successful:', loginUser);
+      // navigate('/');
+      
+    } catch (err) {
+      setError(err.message || 'Registration failed');
+      console.error('Registration error:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -51,12 +58,20 @@ const AuthRegister = () => {
           </Link>
         </p>
       </div>
+
+      {error && (
+        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+          {error}
+        </div>
+      )}
+
       <CommonForm
         formControls={registerFormControls}
-        buttonText={"Sign Up"}
+        buttonText={loading ? "Creating Account..." : "Sign Up"}
         formData={formData}
         setFormData={setFormData}
         onSubmit={onSubmit}
+        disabled={loading}
       />
     </div>
   );

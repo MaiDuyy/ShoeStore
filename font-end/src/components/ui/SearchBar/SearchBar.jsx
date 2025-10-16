@@ -27,7 +27,7 @@ const SearchBar = () => {
         
    
         const filtered = products.filter(product => 
-          product.shoes_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
           product.brand.toLowerCase().includes(searchTerm.toLowerCase())
         ).slice(0, 5); 
@@ -55,7 +55,7 @@ const SearchBar = () => {
   };
 
   const handleSuggestionClick = (product) => {
-    navigate(`/shoes/${product.shoes_id}`);
+    navigate(`/product/${product.slug}`);
     setShowSuggestions(false);
     setSearchTerm('');
   };
@@ -96,12 +96,12 @@ const SearchBar = () => {
                   className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-100"
                 >
                   <img
-                    src={product.images?.[0] || 'https://images.unsplash.com/photo-1556906781-2a4127b44769'}
-                    alt={product.shoes_name}
+                    src={product.imageURL}
+                    alt={product.name}
                     className="w-12 h-12 object-cover rounded"
                   />
                   <div>
-                    <div className="font-medium text-gray-900">{product.shoes_name}</div>
+                    <div className="font-medium text-gray-900">{product.name}</div>
                     <div className="text-sm text-gray-500">
                       {product.brand} • {product.category}
                     </div>

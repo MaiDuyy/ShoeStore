@@ -1,10 +1,10 @@
-const API_BASE_URL = 'http://localhost:5000'; 
+const API_BASE_URL = 'http://localhost:5000' || "https://897stl2q-5000.asse.devtunnels.ms"; 
 
 const API_URLS = {
-    GET_PRODUCTS: `${API_BASE_URL}/api/shoes`, // Lấy danh sách sản phẩm
-    GET_CATEGORIES: `${API_BASE_URL}/api/categories`, // Lấy danh sách loại giày
-    GET_PRODUCTS_DETAILS:(maGiay) => `${API_BASE_URL}/api/shoes/${maGiay}`,
-    GET_TOP_PRODUCTS_BY_CATEGORY: (categoryId) => `${API_BASE_URL}/api/categories/${categoryId}`, // Lấy top 5 giày theo loại
+    GET_PRODUCTS: `${API_BASE_URL}/products`, // Lấy danh sách sản phẩm
+    GET_CATEGORIES: `${API_BASE_URL}/products/group-by-category`, // Lấy danh sách loại giày
+    GET_PRODUCTS_DETAILS:(id) => `${API_BASE_URL}/product/${id}`,
+    GET_TOP_PRODUCTS_BY_CATEGORY: (category) => `${API_BASE_URL}/products/top/${category}`, // Lấy top 5 giày theo loại
     // GET_TABLE: (qr_code) => `${API_BASE_URL}/tables?code=${qr_code}`, // Lấy thông tin bàn
     // POST_ORDER: `${API_BASE_URL}/api/order`, // Đặt hàng
     // GET_ORDERS_FROM_TABLE: (qr_code) => `${API_BASE_URL}/api/table/${qr_code}/details-orders`, // Lấy chi tiết danh sách đơn hàng từ bàn

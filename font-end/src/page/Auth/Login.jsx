@@ -1,16 +1,9 @@
 import CommonForm from "@/components/common/form";
 import { loginFormControls } from "@/config";
-// import { useToast } from "@/hooks/use-toast";
-// import { loginUserThunk } from "@/store/auth-slice";
 import { useState } from "react";
-// import { useDispatch } from "react-redux";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-
-import * as React from "react"
-
-
-
+import { useAuth } from "../../contexts/AuthContext/index";
+// import {authApi} from "../../service/api";
 
 const initialState = {
   email: "",
@@ -19,23 +12,26 @@ const initialState = {
 
 const AuthLogin = () => {
   const [formData, setFormData] = useState(initialState);
-  //   const dispath = useDispatch();
-  //   const { toast } = useToast();
   const navigate = useNavigate();
   const [error, setError] = useState(null);
-  axios.defaults.withCredentials = true;
-  function onSubmit(e) {
-    e.preventDefault();
-    axios.post('http://localhost:5000/auth/userlogin', formData)
-      .then(result => {
-        if (result.data.loginStatus) {
-          navigate('/')
-        }else{
-          setError(result.data.Error)
-        }
+  const [loading, setLoading] = useState(false);
+  const {login} = useAuth();
 
-      })
-      .catch(err => console.log(err))
+  async function onSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const user = await login(formData.email, formData.password);
+      console.log('Login successful:', user);
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Login failed');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -79,17 +75,19 @@ const AuthLogin = () => {
           </div>
         </div>
 
-        <div className="text-danger">
-          {error && error}
-        </div>
-
+        {error && (
+          <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+            {error}
+          </div>
+        )}
 
         <CommonForm
           formControls={loginFormControls}
-          buttonText={"Sign In"}
+          buttonText={loading ? "Signing In..." : "Sign In"}
           formData={formData}
           setFormData={setFormData}
           onSubmit={onSubmit}
+          disabled={loading}
         />
       </div>
     </div>

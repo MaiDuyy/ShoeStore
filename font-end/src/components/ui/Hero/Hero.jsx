@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const HeroSection = () => {
   return (
@@ -28,32 +29,11 @@ const HeroSection = () => {
 
             {/* CTA Buttons */}
             <div className="flex gap-4">
-              <a 
-                href="/shop" 
-                className="bg-black text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-800 transition-colors duration-300"
-              >
-                Shop Now
-              </a>
-              <a 
-                href="/collections" 
-                className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition-colors duration-300"
-              >
-                Explore Collections
-              </a>
+             
+              <Link to={'/listing'} className="bg-black text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-800 transition-colors duration-300">Shop now</Link>
+             
             </div>
 
-            {/* Nike Logo Watermark */}
-            {/* <svg 
-              className="mt-12 w-24 opacity-20" 
-              viewBox="0 0 80 29"
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path 
-                d="M9.733 28.25H0L13.082 0h9.733L9.733 28.25zm16.641-14.23c-2.45-2.058-4.09-4.406-4.09-7.832 0-3.51 1.64-6.19 5.08-6.19 3.27 0 5 2.68 5 6.19 0 3.425-1.64 5.774-4.09 7.832h-1.9zm9.644 14.23h-9.55l6.37-21.5c1.81-5.69 4.91-6.75 8.52-6.75v9.5c-2.25 0-3.73.85-4.72 4.06l-1.62 5.69 12.1 9.5H45.5l-8.52-6.75 4.72-9.5c1.73-3.51 3.35-4.15 5.85-4.15v-9.5c-4.72 0-9.18 2.47-11.41 7.66l-6.45 21.5h-9.55l9.55-28.25h9.55l-3.36 10.83c1.89-2.68 4.63-4.32 8.18-4.32 5.25 0 8.78 3.77 8.78 9.18 0 5.5-3.53 9.18-8.78 9.18-2.68 0-5.08-1.13-6.7-3.18l-1.38 4.32L36.018 28.25zm34.242 0h-9.73l13.08-28.25h9.74L70.26 28.25z" 
-                fill="currentColor"
-              />
-            </svg> */}
           </div>
         </div>
 

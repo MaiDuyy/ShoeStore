@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   MapPin,
@@ -9,6 +8,7 @@ import {
   Instagram
  } from "lucide-react";
  import { Link } from "react-router-dom";
+
 const Footer = () => {
   return (
     <footer className="bg-white border-t border-gray-200">
@@ -30,10 +30,10 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-gray-900 font-semibold">Products</h3>
             <ul className="space-y-2">
-              <li><a href="/men" className="text-gray-600 hover:text-gray-900 text-sm">Men</a></li>
-              <li><a href="/women" className="text-gray-600 hover:text-gray-900 text-sm">Women</a></li>
-              <li><a href="/kids" className="text-gray-600 hover:text-gray-900 text-sm">Kids</a></li>
-              <li><a href="/custom" className="text-gray-600 hover:text-gray-900 text-sm">Customize</a></li>
+              <li><Link to="/men" className="text-gray-600 hover:text-gray-900 text-sm">Men</Link></li>
+              <li><Link to="/women" className="text-gray-600 hover:text-gray-900 text-sm">Women</Link></li>
+              <li><Link to="/kids" className="text-gray-600 hover:text-gray-900 text-sm">Kids</Link></li>
+              <li><Link to="/custom" className="text-gray-600 hover:text-gray-900 text-sm">Customize</Link></li>
             </ul>
           </div>
 
@@ -41,10 +41,10 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-gray-900 font-semibold">Support</h3>
             <ul className="space-y-2">
-              <li><a href="/faq" className="text-gray-600 hover:text-gray-900 text-sm">FAQs</a></li>
-              <li><a href="/shipping" className="text-gray-600 hover:text-gray-900 text-sm">Shipping</a></li>
-              <li><a href="/returns" className="text-gray-600 hover:text-gray-900 text-sm">Returns</a></li>
-              <li><a href="/contact" className="text-gray-600 hover:text-gray-900 text-sm">Contact Us</a></li>
+              <li><Link to="/faq" className="text-gray-600 hover:text-gray-900 text-sm">FAQs</Link></li>
+              <li><Link to="/shipping" className="text-gray-600 hover:text-gray-900 text-sm">Shipping</Link></li>
+              <li><Link to="/returns" className="text-gray-600 hover:text-gray-900 text-sm">Returns</Link></li>
+              <li><Link to="/contact" className="text-gray-600 hover:text-gray-900 text-sm">Contact Us</Link></li>
             </ul>
           </div>
 
@@ -82,16 +82,16 @@ const Footer = () => {
 
           {/* Legal Links */}
           <div className="flex space-x-6">
-            <a href="/privacy" className="text-gray-600 hover:text-gray-900 text-sm">Privacy Policy</a>
-            <a href="/terms" className="text-gray-600 hover:text-gray-900 text-sm">Terms of Service</a>
-            <a href="/cookies" className="text-gray-600 hover:text-gray-900 text-sm">Cookies</a>
+            <Link to="/privacy" className="text-gray-600 hover:text-gray-900 text-sm">Privacy Policy</Link>
+            <Link to="/terms" className="text-gray-600 hover:text-gray-900 text-sm">Terms of Service</Link>
+            <Link to="/cookies" className="text-gray-600 hover:text-gray-900 text-sm">Cookies</Link>
           </div>
 
           {/* Social Media */}
           <div className="flex space-x-4">
-          <Link to="/"> <Twitter className = "text-gray-400 hover:text-gray-900" /></Link>
-              <Link to = "/">  <Facebook className = "text-gray-400 hover:text-gray-900" /></Link>
-             <Link to = "/"><Instagram className = "text-gray-400 hover:text-gray-900" /></Link>
+            <Link to="/"><Twitter className="text-gray-400 hover:text-gray-900" /></Link>
+            <Link to="/"><Facebook className="text-gray-400 hover:text-gray-900" /></Link>
+            <Link to="/"><Instagram className="text-gray-400 hover:text-gray-900" /></Link>
           </div>
         </div>
       </div>
