@@ -1,3 +1,4 @@
+// src/contexts/CartContext/index.jsx
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 
 const CartContext = createContext();
@@ -17,59 +18,73 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // thêm vào giỏ hàng
+  /** Thêm vào giỏ:
+   * Gộp theo: id + selectedSize?.name + selectedColor?.name
+   */
   const addToCart = (item) => {
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(i => i.id === item.id);
-      if (existingItem) {
-        return prevItems.map(i =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+    setCartItems(prev => {
+      const keyMatch = (a, b) =>
+        a.id === b.id &&
+        (a.selectedSize?.name || null) === (b.selectedSize?.name || null) &&
+        (a.selectedColor?.name || null) === (b.selectedColor?.name || null);
+
+      const existing = prev.find(i => keyMatch(i, item));
+      if (existing) {
+        return prev.map(i =>
+          keyMatch(i, item) ? { ...i, quantity: (i.quantity || 0) + (item.quantity || 1) } : i
         );
       }
-      return [...prevItems, { ...item, quantity: 1 }];
+      return [...prev, { ...item, quantity: item.quantity || 1 }];
     });
   };
 
-  // Xóa sản phẩm khỏi giỏ hàng
-  const removeFromCart = (itemId) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
+  // Xóa sản phẩm khỏi giỏ hàng (theo id + biến thể nếu có)
+  const removeFromCart = (itemId, selectedSizeName = null, selectedColorName = null) => {
+    setCartItems(prev =>
+      prev.filter(i =>
+        !(i.id === itemId &&
+          (i.selectedSize?.name || null) === (selectedSizeName || null) &&
+          (i.selectedColor?.name || null) === (selectedColorName || null))
+      )
+    );
   };
 
   const removeAll = () => {
     setCartItems([]);
-    localStorage.removeItem(CART_STORAGE_KEY); // Xóa cả trong localStorage
+    localStorage.removeItem(CART_STORAGE_KEY);
   };
 
-  // Cập nhật số lượng sản phẩm 
-  const updateQuantity = (itemId, quantity) => {
+  // Cập nhật số lượng theo id + biến thể
+  const updateQuantity = (itemId, quantity, selectedSizeName = null, selectedColorName = null) => {
     if (quantity <= 0) {
-      removeFromCart(itemId);
+      removeFromCart(itemId, selectedSizeName, selectedColorName);
       return;
     }
-    
-    setCartItems(prevItems =>
-      prevItems.map(item =>
-        item.id === itemId ? { ...item, quantity } : item
+    setCartItems(prev =>
+      prev.map(i =>
+        (i.id === itemId &&
+          (i.selectedSize?.name || null) === (selectedSizeName || null) &&
+          (i.selectedColor?.name || null) === (selectedColorName || null))
+          ? { ...i, quantity }
+          : i
       )
     );
   };
 
   // Tìm kiếm sản phẩm
-  const searchItems = (query) => {
-    setSearchQuery(query);
-  };
+  const searchItems = (query) => setSearchQuery(query);
 
-  // Tính giá sử dụng useMemo
-  const totalPrice = useMemo(() => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  }, [cartItems]);
+  // Tổng tiền
+  const totalPrice = useMemo(
+    () => cartItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0),
+    [cartItems]
+  );
 
-  // lọc sản phẩm dựa trên từ khóa tìm kiếm
+  // Lọc sản phẩm dựa trên từ khóa tìm kiếm (dùng name thay vì shoes_name)
   const filteredItems = useMemo(() => {
     if (!searchQuery) return cartItems;
-    return cartItems.filter(item =>
-      item.shoes_name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const q = searchQuery.toLowerCase();
+    return cartItems.filter(item => String(item.name || '').toLowerCase().includes(q));
   }, [cartItems, searchQuery]);
 
   return (
@@ -90,9 +105,7 @@ export const CartProvider = ({ children }) => {
 };
 
 export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
-}; 
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error('useCart must be used within a CartProvider');
+  return ctx;
+};

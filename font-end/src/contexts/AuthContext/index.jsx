@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { authApi } from "../../service/api";
 
 /** ====== Config ====== */
-const ACCESS_TOKEN_KEY = "accessToken";
+const ACCESS_TOKEN_KEY = "access-token";
 const USER_CACHE_KEY = "auth_user";
 const API_BASE_URL = "http://localhost:5000";
 
@@ -48,11 +48,12 @@ const buildUserFromLogin = (data) => {
   if (!data || typeof data !== "object") return null;
   const id = data.id ?? data._id ?? null;
   const email = data.email ?? "";
+   const phone = data.phone ?? "";
   const username =
     data.name || (email ? email.split("@")[0] : "") || "user";
   const roles = normalizeRoles(data.roles);
   if (!id && !email && !username) return null;
-  return { id, email, username, roles };
+  return { id, email, username, roles , phone };
 };
 
 const AuthContext = createContext({

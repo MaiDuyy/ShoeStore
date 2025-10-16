@@ -1,6 +1,7 @@
 // Header.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux';
 import { 
   LogOut, 
   Menu, 
@@ -14,8 +15,9 @@ import {
 } from "lucide-react";
 
 import { Button } from "../button";
-import { useCart } from "@/contexts/CartContext";
+import { fetchCart, updateCartItem, removeFromCart } from '@/redux/features/cartSlice';
 import SearchBar from '@/components/ui/SearchBar/SearchBar';
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   DropdownMenu,
@@ -97,8 +99,12 @@ const HeaderRightContent = ({ user, onLogout }) => {
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem onClick={() => navigate('/account')}>
-            <UserCog className="w-4 h-4 mr-2" /> Account
+          <DropdownMenuItem onClick={() => navigate('/profile')}>
+            <UserCog className="w-4 h-4 mr-2" /> Thông tin cá nhân
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem onClick={() => navigate('/orders')}>
+            <ShoppingCart className="w-4 h-4 mr-2" /> Đơn hàng của tôi
           </DropdownMenuItem>
 
           {isAdminLike(roles) && (
@@ -116,19 +122,96 @@ const HeaderRightContent = ({ user, onLogout }) => {
     </div>
   );
 };
-
-/** ==================== Cart ==================== */
 const Cart = () => {
-  const { cartItems, removeFromCart, updateQuantity, totalPrice } = useCart();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { items, totalAmount } = useSelector((state) => state.cart);
+  const { user } = useAuth();
+  const [selectedItems, setSelectedItems] = useState(new Set());
+
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchCart());
+    }
+  }, [dispatch, user]);
+
+  const handleUpdateQuantity = async (item, newQuantity) => {
+    if (newQuantity < 1) return;
+    
+    try {
+      await dispatch(updateCartItem({
+        productId: item.product._id,
+        quantity: newQuantity,
+        size: item.size,
+        color: item.color
+      })).unwrap();
+    } catch (error) {
+      console.error('Failed to update cart:', error);
+    }
+  };
+
+  const handleRemove = async (item) => {
+    try {
+      await dispatch(removeFromCart({
+        productId: item.product._id,
+        size: item.size,
+        color: item.color
+      })).unwrap();
+      
+      // Remove from selected items
+      const itemKey = `${item.product._id}-${item.size}-${item.color}`;
+      setSelectedItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemKey);
+        return newSet;
+      });
+    } catch (error) {
+      console.error('Failed to remove from cart:', error);
+    }
+  };
+
+  const toggleSelectItem = (item) => {
+    const itemKey = `${item.product._id}-${item.size}-${item.color}`;
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemKey)) {
+        newSet.delete(itemKey);
+      } else {
+        newSet.add(itemKey);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === items.length) {
+      setSelectedItems(new Set());
+    } else {
+      const allKeys = items.map(item => `${item.product._id}-${item.size}-${item.color}`);
+      setSelectedItems(new Set(allKeys));
+    }
+  };
+
+  const selectedTotal = items
+    .filter(item => selectedItems.has(`${item.product._id}-${item.size}-${item.color}`))
+    .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  const handleCheckout = () => {
+    if (selectedItems.size === 0) {
+      alert('Vui lòng chọn sản phẩm để thanh toán');
+      return;
+    }
+    navigate('/checkout', { state: { selectedItems: Array.from(selectedItems) } });
+  };
 
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <div className="relative">
-          <ShoppingCart className="w-6 h-6 hidden text-gray-800 hover:text-gray-600 lg:block"/>
-          {cartItems.length > 0 && (
+        <div className="relative cursor-pointer">
+          <ShoppingCart className="w-6 h-6 text-gray-800 hover:text-gray-600"/>
+          {items.length > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              {cartItems.length}
+              {items.length}
             </span>
           )}
         </div>
@@ -136,78 +219,135 @@ const Cart = () => {
 
       <SheetContent className="flex w-full flex-col sm:max-w-lg">
         <SheetHeader className="px-1">
-          <SheetTitle>Shopping Cart</SheetTitle>
+          <SheetTitle>Giỏ hàng</SheetTitle>
           <SheetDescription>
-            {cartItems.length === 0 ? 'Your cart is empty' : `You have ${cartItems.length} items in your cart`}
+            {items.length === 0 ? 'Giỏ hàng trống' : `Bạn có ${items.length} sản phẩm trong giỏ`}
           </SheetDescription>
         </SheetHeader>
-        
+
         <div className="flex flex-1 flex-col gap-5 overflow-hidden">
-          {cartItems.length === 0 ? (
+          {items.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center">
               <ShoppingBag className="mb-4 h-16 w-16 text-gray-400" />
-              <p className="text-gray-500">No items in cart</p>
+              <p className="text-gray-500">Chưa có sản phẩm nào</p>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto">
-              <div className="h-full space-y-4 overflow-y-auto p-1">
-                {cartItems.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className="flex items-start gap-4 rounded-lg border bg-white p-4 shadow-sm"
-                  >
-                    <img 
-                      src={item.imageURL} 
-                      alt={item.name}
-                      className="h-20 w-20 rounded-md object-cover"
-                    />
-                    <div className="flex flex-1 flex-col gap-1">
-                      <h3 className="font-medium line-clamp-2">{item.name}</h3>
-                      <p className="text-sm text-gray-500">{currency(item.price)}</p>
-                      
-                      <div className="flex items-center gap-2 mt-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-8 text-center">{item.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => removeFromCart(item.id)}
-                          className="ml-auto"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <>
+              {/* Select All */}
+              <div className="flex items-center gap-2 px-1 border-b pb-2">
+                <Checkbox
+                  checked={selectedItems.size === items.length && items.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                />
+                <span className="text-sm font-medium">
+                  Chọn tất cả ({selectedItems.size}/{items.length})
+                </span>
               </div>
-            </div>
+
+              <div className="flex-1 overflow-y-auto">
+                <div className="h-full space-y-4 overflow-y-auto p-1">
+                  {items.map((item, idx) => {
+                    const itemKey = `${item.product._id}-${item.size}-${item.color}`;
+                    const isSelected = selectedItems.has(itemKey);
+
+                    return (
+                      <div 
+                        key={`${itemKey}-${idx}`} 
+                        className={`flex items-start gap-3 rounded-lg border p-3 transition ${
+                          isSelected ? 'border-blue-500 bg-blue-50' : 'bg-white'
+                        }`}
+                      >
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelectItem(item)}
+                          className="mt-1"
+                        />
+
+                        <img 
+                          src={item.product.imageURL} 
+                          alt={item.product.name}
+                          className="h-20 w-20 rounded-md object-cover"
+                        />
+
+                        <div className="flex flex-1 flex-col gap-1">
+                          <h3 className="font-medium text-sm line-clamp-2">{item.product.name}</h3>
+
+                          <div className="text-xs text-gray-500">
+                            {item.size && <span className="mr-2">Size: {item.size}</span>}
+                            {item.color && <span>Màu: {item.color}</span>}
+                          </div>
+
+                          <p className="text-sm font-semibold text-blue-600">{currency(item.price)}</p>
+
+                          <div className="flex items-center gap-2 mt-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => handleUpdateQuantity(item, item.quantity - 1)}
+                              disabled={item.quantity <= 1}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+
+                            <span className="w-8 text-center text-sm">{item.quantity}</span>
+
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => handleUpdateQuantity(item, item.quantity + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 ml-auto text-red-500 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleRemove(item)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
           )}
         </div>
 
-        <div className="border-t pt-4 mt-auto">
-          <div className="flex justify-between text-base font-medium px-1">
-            <p>Subtotal</p>
-            <p>{currency(totalPrice)}</p>
+        <div className="border-t pt-4 mt-auto space-y-3">
+          <div className="flex justify-between text-sm px-1">
+            <span className="text-gray-600">Tổng tiền giỏ hàng:</span>
+            <span className="font-medium">{currency(totalAmount)}</span>
           </div>
-          <SheetFooter className="mt-6">
+          
+          {selectedItems.size > 0 && (
+            <div className="flex justify-between text-base font-semibold px-1">
+              <span>Thanh toán ({selectedItems.size} sản phẩm):</span>
+              <span className="text-blue-600">{currency(selectedTotal)}</span>
+            </div>
+          )}
+
+          <SheetFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => navigate('/cart')}
+            >
+              Xem giỏ hàng
+            </Button>
             <SheetClose asChild>
-              <Button className="w-full" disabled={cartItems.length === 0}>
-                Checkout ({currency(totalPrice)})
+              <Button 
+                className="flex-1" 
+                disabled={selectedItems.size === 0}
+                onClick={handleCheckout}
+              >
+                Thanh toán
               </Button>
             </SheetClose>
           </SheetFooter>

@@ -37,10 +37,37 @@ const checkRolesExisted = (req, res, next) => {
     }
     next();
 };
+const checkActiveOnSignin = async (req, res, next) => {
+  try {
+    const rawEmail = req.body?.email;
+    if (!rawEmail) {
+      // Không đủ dữ liệu để kiểm tra -> để controller signin xử lý
+      return next();
+    }
+
+    const email = String(rawEmail).trim().toLowerCase();
+
+    // Chỉ lấy field cần
+    const user = await User.findOne({ email }).select("isActive");
+    if (!user) {
+      // Không lộ thông tin user tồn tại hay không
+      return next();
+    }
+
+    if (user.isActive === false) {
+      return res.status(403).json({ message: "Account is blocked" });
+    }
+
+    return next();
+  } catch (err) {
+    return res.status(500).json({ message: err.message || "Server error" });
+  }
+};
  
 const verifySignUp = {
     checkDuplicateUsernameOrEmail,
     checkRolesExisted,
+    checkActiveOnSignin
 };
  
 export default verifySignUp;

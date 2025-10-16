@@ -7,6 +7,9 @@ import db from './models/index.js';
 import { productRouter } from './Router/product.routes.js';
 import authRouter  from './Router/auth.routes.js';
 import userRouter  from './Router/user.routes.js';
+import cartRouter from './Router/cart.routes.js';
+import orderRouter from './Router/order.routes.js';
+import adminRouter from './Router/admin.routes.js';
 
 dotenv.config();
 
@@ -24,13 +27,14 @@ const ALLOWED_ORIGINS = RAW_ORIGINS.split(',').map((s) => s.trim()).filter(Boole
 
 // Middlewares
 const corsOptions = {
-  methods : ['GET', 'PUT', 'POST'],
+  methods : ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
   origin: (origin, callback) => {
     if (!origin) return callback(null, true); // non-browser clients
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
     return callback(new Error(`Origin ${origin} not allowed by CORS`));
   },
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
 };
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
@@ -38,10 +42,12 @@ app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
-// app.use('/auth',adminRouter);
 app.use('/auth',authRouter)
 app.use('/user',userRouter)
 app.use('/products',productRouter)
+app.use('/cart',cartRouter)
+app.use('/orders',orderRouter)
+app.use('/admin',adminRouter)
 
 // DB connect
 const localURI = process.env.MONGODB_LOCAL;

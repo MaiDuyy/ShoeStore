@@ -5,12 +5,16 @@ import mongoose from "mongoose";
 const atlasURI = process.env.MONGODB_URI;
 import User from "./user.model.js";
 import Role from "./role.model.js";
+import Cart from "./cart.model.js";
+import Order from "./order.model.js";
  
 const db = {};
  
 db.mongoose = mongoose;
 db.User = User;
 db.Role = Role;
+db.Cart = Cart;
+db.Order = Order;
  
 db.ROLES = ["user", "admin", "moderator"];
 db.config = localURI;

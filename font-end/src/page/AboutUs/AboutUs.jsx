@@ -2,13 +2,6 @@ import React, { useState } from 'react';
 
 const About = () => {
 
-    const [teamMembers] = useState([
-        { name: 'Lê Vũ Thanh Dương', img: 'https://placehold.co/200x230', studentCode: '22643441' },
-        { name: 'Nguyễn Nhật Dương', img: 'https://placehold.co/200x230', studentCode: '22639261' },
-        { name: 'Phạm Mai Duy', img: 'https://placehold.co/200x230', studentCode: '22002115' },
-        { name: 'Phan Tấn Duy', img: 'https://placehold.co/200x230', studentCode: '22678601' },
-        { name: 'Nguyễn Quỳnh Gia', img: 'https://placehold.co/200x230', studentCode: 'Chi tiết về Nguyễn Quỳnh Gia.' }
-    ]);
 
     const [selectedMember, setSelectedMember] = useState(null);
 
@@ -47,42 +40,9 @@ const About = () => {
                     </p>
                 </div>
             </div>
-            <div className="py-5">
-                <h2 className="text-2xl font-bold text-center">ALL MEMBER</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 py-5">
-                {teamMembers.map((member, index) => (
-                    <div
-                        className="card border p-3 cursor-pointer hover:shadow-lg"
-                        key={index}
-                        onClick={() => handleMemberClick(member)}
-                    >
-                        <img src={member.img} alt={member.name} className="w-full mb-2" />
-                        <h3 className='text-center text-lg font-bold'>{member.name}</h3>
-                    </div>
-                ))}
-            </div>
-            {selectedMember && (
-                <div
-                    className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50"
-                    onClick={closeDetails}
-                >
-                    <div
-                        className="bg-white p-5 rounded shadow-lg"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h5 className="text-xl font-bold text-center">Thông tin chi tiết</h5>
-                        <div className="flex flex-col md:flex-row items-center gap-5">
-                            <img src={selectedMember.img} alt={selectedMember.name} className="w-40 h-40 object-cover" />
-                            <div>
-                                <h3 className='text-lg font-bold'>{selectedMember.name}</h3>
-                                <p>MSSV: {selectedMember.studentCode}</p>
-                            </div>
-                        </div>
-                        <button type="button" className="mt-5 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-700" onClick={closeDetails}>Close</button>
-                    </div>
-                </div>
-            )}
+           
+           
+           
         </div>
     );
 }

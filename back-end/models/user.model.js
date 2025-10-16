@@ -26,15 +26,37 @@ const userSchema = new mongoose.Schema(
                 ref: "Role",
             },
         ],
+        isActive: {
+            type: Boolean,
+            default: true,
+        },
+        lastLogin: {
+            type: Date,
+        },
+        avatarURL: {
+            type: String,
+            default: null,
+        },
+        phone: {
+            type: String,
+            default: null,
+        },
+        address: {
+            street: String,
+            city: String,
+            district: String,
+            ward: String,
+            postalCode: String,
+        },
     },
     { timestamps: true },
 );
 // Optional: normalize email
 userSchema.pre('save', function (next) {
-  if (this.isModified('email') && typeof this.email === 'string') {
-    this.email = this.email.trim().toLowerCase();
-  }
-  next();
+    if (this.isModified('email') && typeof this.email === 'string') {
+        this.email = this.email.trim().toLowerCase();
+    }
+    next();
 });
 
 export default mongoose.model('User', userSchema);

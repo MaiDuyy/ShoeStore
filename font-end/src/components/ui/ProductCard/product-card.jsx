@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
+import  AddToCartButton  from '../AddToCartButton/AddToCartButton';
 // Helper format tiền tệ (tùy app: 'vi-VN' và VND hay 'en-US' và USD)
 const formatCurrency = (value, locale = 'vi-VN', currency = 'VND') =>
   new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value || 0);
@@ -138,7 +138,7 @@ function ShoppingProductCard({ product, handleGetProductDetails }) {
             loading="lazy"
           />
           <div className="absolute top-2 right-2">
-            <Button
+            {/* <Button
               disabled={!inStock || isLoading || isMaxQuantityReached}
               onClick={handleAddToCart}
               variant="secondary"
@@ -153,7 +153,30 @@ function ShoppingProductCard({ product, handleGetProductDetails }) {
               }
             >
               <ShoppingCartIcon className="w-5 h-5" />
-            </Button>
+            </Button> */}
+            <AddToCartButton
+              disabled={!inStock || isLoading || isMaxQuantityReached}
+              onClick={handleAddToCart}
+              variant="secondary"
+              size="sm"
+              className="hover:scale-110 transition-transform active:scale-95"
+              title={
+                !inStock
+                  ? "Hết hàng"
+                  : isMaxQuantityReached
+                    ? "Đã đạt số lượng tối đa"
+                    : "Thêm vào giỏ"
+              }
+              product={product}
+              selectedSize={defaultVariant.sizeName ? { name: defaultVariant.sizeName } : null} 
+              selectedColor={defaultVariant.colorName ? { name: defaultVariant.colorName } : null}
+              quantity={1}
+            >
+
+                <ShoppingCartIcon className="w-5 h-5" />
+            </AddToCartButton>
+
+            
           </div>
         </CardHeader>
 
